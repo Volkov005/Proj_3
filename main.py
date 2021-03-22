@@ -3,9 +3,11 @@ from werkzeug.utils import redirect
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from data import db_session
 from data.cards import Cards
+from data.owner_money_class import Owner_money
 from data.type_operations import Type_of_operation
 from data.users import User
 from forms.card import CardForm
+from forms.owner_money import Owner_moneyForm
 from forms.type_operation import Type_OperationForm
 from forms.user import RegisterForm, LoginForm
 
@@ -114,6 +116,23 @@ def add_type_operation():
         db_sess.commit()
         return redirect('/')
     return render_template('type_operation.html', title='Добавление типа операций',
+                           form=form)
+
+
+@app.route('/owner_money',  methods=['GET', 'POST'])
+@login_required
+def add_owner_money():
+    form = Owner_moneyForm()
+    if form.validate_on_submit():
+        db_sess = db_session.create_session()
+        owner = Owner_money()
+        owner.title = form.title.data
+        owner.content = form.content.data
+        current_user.owner_money.append(owner)
+        db_sess.merge(current_user)
+        db_sess.commit()
+        return redirect('/')
+    return render_template('owner_money.html', title='Добавление owner',
                            form=form)
 
 

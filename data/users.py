@@ -18,8 +18,10 @@ class User(SqlAlchemyBase, UserMixin):
     hashed_password = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     created_date = sqlalchemy.Column(sqlalchemy.DateTime,
                                      default=datetime.datetime.now)
+
     cards = orm.relation("Cards", back_populates='user')
     type_of_operation = orm.relation('Type_of_operation', back_populates='user')
+    owner_money = orm.relation("Owner_money", back_populates='user')
 
     def set_password(self, password):
         self.hashed_password = generate_password_hash(password)
