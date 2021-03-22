@@ -3,8 +3,10 @@ from werkzeug.utils import redirect
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from data import db_session
 from data.cards import Cards
+from data.type_operations import Type_of_operation
 from data.users import User
 from forms.card import CardForm
+from forms.type_operation import Type_OperationForm
 from forms.user import RegisterForm, LoginForm
 
 app = Flask(__name__)
@@ -77,7 +79,7 @@ def logout():
 
 @app.route('/cards',  methods=['GET', 'POST'])
 @login_required
-def add_news():
+def add_cards():
     form = CardForm()
     if form.validate_on_submit():
         db_sess = db_session.create_session()
@@ -89,6 +91,29 @@ def add_news():
         db_sess.commit()
         return redirect('/')
     return render_template('cards.html', title='Добавление карты',
+                           form=form)
+
+
+@app.route('/type_operation',  methods=['GET', 'POST'])
+@login_required
+def add_type_operation():
+    form = Type_OperationForm()
+    if form.validate_on_submit():
+        db_sess = db_session.create_session()
+        type_operations = Type_of_operation()
+        type_operations.title = form.title.data
+        type_operations.content = form.content.data
+        if form.type_operation.data == 'Приход':
+            type_operations.type_operation = 1
+        elif form.type_operation.data == 'Приход':
+            type_operations.type_operation = 2
+        else:
+            type_operations.type_operation = 3
+        current_user.type_of_operation.append(type_operations)
+        db_sess.merge(current_user)
+        db_sess.commit()
+        return redirect('/')
+    return render_template('type_operation.html', title='Добавление типа операций',
                            form=form)
 
 
