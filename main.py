@@ -18,6 +18,7 @@ app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
 login_manager = LoginManager()
 login_manager.init_app(app)
 
+
 def main():
     db_session.global_init("db/family_bud.sqlite")
     app.run()
@@ -152,6 +153,34 @@ def add_resource():
         return redirect('/')
     return render_template('resource.html', title='Добавление owner',
                            form=form)
+
+
+@app.route('/cards_table')
+def get_cards_table():
+    db_sess = db_session.create_session()
+    cards = db_sess.query(Cards).filter(Cards.user_id == current_user.id)
+    return render_template("cards_table.html", cards=cards)
+
+
+@app.route('/type_operation_table')
+def get_type_operation_table():
+    db_sess = db_session.create_session()
+    type_operation = db_sess.query(Type_of_operation).filter(Type_of_operation.user_id == current_user.id)
+    return render_template("type_operation_table.html", type_operation=type_operation)
+
+
+@app.route('/owner_money_table')
+def get_owner_money_table():
+    db_sess = db_session.create_session()
+    owner_money = db_sess.query(Owner_money).filter(Owner_money.user_id == current_user.id)
+    return render_template("owner_money_table.html", owner_money=owner_money)
+
+
+@app.route('/resource_table')
+def get_resource_table():
+    db_sess = db_session.create_session()
+    resource = db_sess.query(Owner_money).filter(Resource.user_id == current_user.id)
+    return render_template("resource_table.html", resource=resource)
 
 
 if __name__ == '__main__':

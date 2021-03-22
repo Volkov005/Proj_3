@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1><b>Типы операций</b></h1>
+
+<txt>1 - Приход</txt>
+<h1></h1>
+<txt>2 - Расход</txt>
+<h1></h1>
+<txt>3 - Универсал</txt>
+
+{% for item in type_operation%}
+<div class="col-md6 border rounded">
+    <h2>{{item.title}}</h2>
+    <div>
+        {{item.content}}
+    </div>
+    <div>
+        Автор - {{item.user.name}}, тип - {{ item.type_operation }}
+    </div>
+</div>
+{% endfor %}
+{% endblock %}

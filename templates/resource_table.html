@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1><b>Типы ресурсов</b></h1>
+{% for item in resource%}
+<div class="col-md6 border rounded">
+    <h2>{{item.title}}</h2>
+    <div>
+        {{item.content}}
+    </div>
+    <div>
+        Автор - {{item.user.name}}
+    </div>
+</div>
+{% endfor %}
+{% endblock %}
