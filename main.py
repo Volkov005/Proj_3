@@ -2,9 +2,9 @@ from flask import Flask, render_template
 from werkzeug.utils import redirect
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from data import db_session
-from data.news import News
+from data.cards import Cards
 from data.users import User
-from forms.news import NewsForm
+from forms.card import CardForm
 from forms.user import RegisterForm, LoginForm
 
 app = Flask(__name__)
@@ -75,21 +75,20 @@ def logout():
     return redirect("/")
 
 
-@app.route('/news',  methods=['GET', 'POST'])
+@app.route('/cards',  methods=['GET', 'POST'])
 @login_required
 def add_news():
-    form = NewsForm()
+    form = CardForm()
     if form.validate_on_submit():
         db_sess = db_session.create_session()
-        news = News()
-        news.title = form.title.data
-        news.content = form.content.data
-        news.is_private = form.is_private.data
-        current_user.news.append(news)
+        cards = Cards()
+        cards.title = form.title.data
+        cards.content = form.content.data
+        current_user.cards.append(cards)
         db_sess.merge(current_user)
         db_sess.commit()
         return redirect('/')
-    return render_template('news.html', title='Добавление новости',
+    return render_template('cards.html', title='Добавление карты',
                            form=form)
 
 

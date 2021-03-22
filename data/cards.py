@@ -5,8 +5,8 @@ from sqlalchemy import orm
 from .db_session import SqlAlchemyBase
 
 
-class News(SqlAlchemyBase):
-    __tablename__ = 'news'
+class Cards(SqlAlchemyBase):
+    __tablename__ = 'cards'
 
     id = sqlalchemy.Column(sqlalchemy.Integer,
                            primary_key=True, autoincrement=True)
@@ -14,7 +14,6 @@ class News(SqlAlchemyBase):
     content = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     created_date = sqlalchemy.Column(sqlalchemy.DateTime,
                                      default=datetime.datetime.now)
-    is_private = sqlalchemy.Column(sqlalchemy.Boolean, default=True)
 
     user_id = sqlalchemy.Column(sqlalchemy.Integer,
                                 sqlalchemy.ForeignKey("users.id"))
