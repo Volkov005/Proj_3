@@ -4,6 +4,7 @@ from flask_login import LoginManager, login_user, login_required, logout_user, c
 from data import db_session
 from data.cards import Cards
 from data.owner_money_class import Owner_money
+from data.resources import Resource
 from data.type_operations import Type_of_operation
 from data.users import User
 from forms.card import CardForm
@@ -133,6 +134,23 @@ def add_owner_money():
         db_sess.commit()
         return redirect('/')
     return render_template('owner_money.html', title='Добавление owner',
+                           form=form)
+
+
+@app.route('/resource',  methods=['GET', 'POST'])
+@login_required
+def add_resource():
+    form = Owner_moneyForm()
+    if form.validate_on_submit():
+        db_sess = db_session.create_session()
+        resource = Resource()
+        resource.title = form.title.data
+        resource.content = form.content.data
+        current_user.resource.append(resource)
+        db_sess.merge(current_user)
+        db_sess.commit()
+        return redirect('/')
+    return render_template('resource.html', title='Добавление owner',
                            form=form)
 
 
