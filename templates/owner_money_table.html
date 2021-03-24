@@ -2,7 +2,9 @@
 
 {% block content %}
 <h1><b>Owner money</b></h1>
-{% for item in owner_money%}
+<a href="owner_money" class="btn btn-secondary">Внести изменения в owner money</a>
+<h1></h1>
+{% for item in owner_money[::-1]%}
 <div class="col-md6 border rounded">
     <h2>{{item.title}}</h2>
     <div>

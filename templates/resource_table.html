@@ -2,7 +2,8 @@
 
 {% block content %}
 <h1><b>Типы ресурсов</b></h1>
-{% for item in resource%}
+<a href="resource" class="btn btn-secondary">Внести изменения в resource</a>
+{% for item in resource[::-1] %}
 <div class="col-md6 border rounded">
     <h2>{{item.title}}</h2>
     <div>

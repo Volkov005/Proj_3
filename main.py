@@ -9,6 +9,7 @@ from data.type_operations import Type_of_operation
 from data.users import User
 from forms.card import CardForm
 from forms.owner_money import Owner_moneyForm
+from forms.resource import ResourceForm
 from forms.type_operation import Type_OperationForm
 from forms.user import RegisterForm, LoginForm
 
@@ -26,7 +27,7 @@ def main():
 
 @app.route('/')
 def index():
-    return render_template('index.html', username='Andrey')
+    return render_template('index1.html', username='Andrey')
 
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -93,7 +94,7 @@ def add_cards():
         current_user.cards.append(cards)
         db_sess.merge(current_user)
         db_sess.commit()
-        return redirect('/')
+        return redirect('/cards_table')
     return render_template('cards.html', title='Добавление карты',
                            form=form)
 
@@ -116,7 +117,7 @@ def add_type_operation():
         current_user.type_of_operation.append(type_operations)
         db_sess.merge(current_user)
         db_sess.commit()
-        return redirect('/')
+        return redirect('/type_operation_table')
     return render_template('type_operation.html', title='Добавление типа операций',
                            form=form)
 
@@ -133,7 +134,7 @@ def add_owner_money():
         current_user.owner_money.append(owner)
         db_sess.merge(current_user)
         db_sess.commit()
-        return redirect('/')
+        return redirect('/owner_money_table')
     return render_template('owner_money.html', title='Добавление owner',
                            form=form)
 
@@ -141,7 +142,7 @@ def add_owner_money():
 @app.route('/resource',  methods=['GET', 'POST'])
 @login_required
 def add_resource():
-    form = Owner_moneyForm()
+    form = ResourceForm()
     if form.validate_on_submit():
         db_sess = db_session.create_session()
         resource = Resource()
@@ -150,8 +151,8 @@ def add_resource():
         current_user.resource.append(resource)
         db_sess.merge(current_user)
         db_sess.commit()
-        return redirect('/')
-    return render_template('resource.html', title='Добавление owner',
+        return redirect('/resource_table')
+    return render_template('resource.html', title='Добавление resource',
                            form=form)
 
 
@@ -179,7 +180,7 @@ def get_owner_money_table():
 @app.route('/resource_table')
 def get_resource_table():
     db_sess = db_session.create_session()
-    resource = db_sess.query(Owner_money).filter(Resource.user_id == current_user.id)
+    resource = db_sess.query(Resource).filter(Resource.user_id == current_user.id)
     return render_template("resource_table.html", resource=resource)
 
 

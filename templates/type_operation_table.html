@@ -8,8 +8,10 @@
 <txt>2 - Расход</txt>
 <h1></h1>
 <txt>3 - Универсал</txt>
-
-{% for item in type_operation%}
+<h1></h1>
+<a href="type_operation" class="btn btn-secondary">Внести изменения в типы операций</a>
+<h1></h1>
+{% for item in type_operation[::-1]%}
 <div class="col-md6 border rounded">
     <h2>{{item.title}}</h2>
     <div>
