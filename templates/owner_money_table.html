@@ -13,6 +13,16 @@
     <div>
         Автор - {{item.user.name}}
     </div>
+        {% if current_user.is_authenticated and current_user == item.user %}
+    <div>
+        <a href="/owner_money/{{ item.id }}" class="btn btn-warning">
+            Изменить
+        </a>
+        <a href="/owner_money_delete/{{ item.id }}" class="btn btn-danger">
+            Удалить
+        </a>
+    </div>
+{% endif %}
 </div>
 {% endfor %}
 {% endblock %}

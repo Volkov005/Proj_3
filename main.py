@@ -1,4 +1,7 @@
-from flask import Flask, render_template
+import datetime
+
+from flask import Flask, render_template, request
+from flask_restful import abort
 from werkzeug.utils import redirect
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from data import db_session
@@ -82,7 +85,7 @@ def logout():
     return redirect("/")
 
 
-@app.route('/cards',  methods=['GET', 'POST'])
+@app.route('/cards', methods=['GET', 'POST'])
 @login_required
 def add_cards():
     form = CardForm()
@@ -99,7 +102,7 @@ def add_cards():
                            form=form)
 
 
-@app.route('/type_operation',  methods=['GET', 'POST'])
+@app.route('/type_operation', methods=['GET', 'POST'])
 @login_required
 def add_type_operation():
     form = Type_OperationForm()
@@ -110,7 +113,7 @@ def add_type_operation():
         type_operations.content = form.content.data
         if form.type_operation.data == 'Приход':
             type_operations.type_operation = 1
-        elif form.type_operation.data == 'Приход':
+        elif form.type_operation.data == 'Расход':
             type_operations.type_operation = 2
         else:
             type_operations.type_operation = 3
@@ -122,7 +125,7 @@ def add_type_operation():
                            form=form)
 
 
-@app.route('/owner_money',  methods=['GET', 'POST'])
+@app.route('/owner_money', methods=['GET', 'POST'])
 @login_required
 def add_owner_money():
     form = Owner_moneyForm()
@@ -139,7 +142,7 @@ def add_owner_money():
                            form=form)
 
 
-@app.route('/resource',  methods=['GET', 'POST'])
+@app.route('/resource', methods=['GET', 'POST'])
 @login_required
 def add_resource():
     form = ResourceForm()
@@ -182,6 +185,208 @@ def get_resource_table():
     db_sess = db_session.create_session()
     resource = db_sess.query(Resource).filter(Resource.user_id == current_user.id)
     return render_template("resource_table.html", resource=resource)
+
+
+@app.route('/cards/<int:id>', methods=['GET', 'POST'])
+@login_required
+def edit_cards(id):
+    form = CardForm()
+    if request.method == "GET":
+        db_sess = db_session.create_session()
+        cards = db_sess.query(Cards).filter(Cards.id == id,
+                                            Cards.user == current_user
+                                            ).first()
+        if cards:
+            form.title.data = cards.title
+            form.content.data = cards.content
+        else:
+            abort(404)
+    if form.validate_on_submit():
+        db_sess = db_session.create_session()
+        cards = db_sess.query(Cards).filter(Cards.id == id,
+                                            Cards.user == current_user
+                                            ).first()
+        if cards:
+            cards.title = form.title.data
+            cards.content = form.content.data
+            cards.created_date = datetime.datetime.now()
+            db_sess.commit()
+            return redirect('/cards_table')
+        else:
+            abort(404)
+    return render_template('cards.html',
+                           title='Редактирование новости',
+                           form=form
+                           )
+
+
+@app.route('/type_operation/<int:id>', methods=['GET', 'POST'])
+@login_required
+def edit_type_operation(id):
+    form = Type_OperationForm()
+    if request.method == "GET":
+        db_sess = db_session.create_session()
+        type_operation = db_sess.query(Type_of_operation).filter(Type_of_operation.id == id,
+                                                                 Type_of_operation.user == current_user
+                                                                 ).first()
+        if type_operation:
+            form.title.data = type_operation.title
+            form.content.data = type_operation.content
+            if type_operation.type_operation == 1:
+                form.type_operation.data = 'Приход'
+            elif type_operation.type_operation == 2:
+                form.type_operation.data = 'Расход'
+            else:
+                form.type_operation.data = 'Универсал'
+
+        else:
+            abort(404)
+    if form.validate_on_submit():
+        db_sess = db_session.create_session()
+        type_operation = db_sess.query(Type_of_operation).filter(Type_of_operation.id == id,
+                                                                 Type_of_operation.user == current_user
+                                                                 ).first()
+        if type_operation:
+            type_operation.title = form.title.data
+            type_operation.content = form.content.data
+            if form.type_operation.data == 'Приход':
+                type_operation.type_operation = 1
+            elif form.type_operation.data == 'Расход':
+                type_operation.type_operation = 2
+            else:
+                type_operation.type_operation = 3
+            db_sess.commit()
+            return redirect('/type_operation_table')
+        else:
+            abort(404)
+    return render_template('type_operation.html',
+                           title='Редактирование новости',
+                           form=form
+                           )
+
+
+@app.route('/owner_money/<int:id>', methods=['GET', 'POST'])
+@login_required
+def edit_owner(id):
+    form = Owner_moneyForm()
+    if request.method == "GET":
+        db_sess = db_session.create_session()
+        owner_money = db_sess.query(Owner_money).filter(Owner_money.id == id,
+                                                        Owner_money.user == current_user
+                                                        ).first()
+        if owner_money:
+            form.title.data = owner_money.title
+            form.content.data = owner_money.content
+        else:
+            abort(404)
+    if form.validate_on_submit():
+        db_sess = db_session.create_session()
+        owner_money = db_sess.query(Owner_money).filter(Owner_money.id == id,
+                                                        Owner_money.user == current_user
+                                                        ).first()
+        if owner_money:
+            owner_money.title = form.title.data
+            owner_money.content = form.content.data
+            db_sess.commit()
+            return redirect('/owner_money_table')
+        else:
+            abort(404)
+    return render_template('cards.html',
+                           title='Редактирование owner',
+                           form=form
+                           )
+
+
+@app.route('/resource/<int:id>', methods=['GET', 'POST'])
+@login_required
+def edit_resource(id):
+    form = ResourceForm()
+    if request.method == "GET":
+        db_sess = db_session.create_session()
+        resource = db_sess.query(Resource).filter(Resource.id == id,
+                                                  Resource.user == current_user
+                                                  ).first()
+        if resource:
+            form.title.data = resource.title
+            form.content.data = resource.content
+        else:
+            abort(404)
+    if form.validate_on_submit():
+        db_sess = db_session.create_session()
+        resource = db_sess.query(Resource).filter(Resource.id == id,
+                                                  Resource.user == current_user
+                                                  ).first()
+        if resource:
+            resource.title = form.title.data
+            resource.content = form.content.data
+            db_sess.commit()
+            return redirect('/resource_table')
+        else:
+            abort(404)
+    return render_template('resource.html',
+                           title='Редактирование ресурса',
+                           form=form
+                           )
+
+
+@app.route('/cards_delete/<int:id>', methods=['GET', 'POST'])
+@login_required
+def cards_delete(id):
+    db_sess = db_session.create_session()
+    cards = db_sess.query(Cards).filter(Cards.id == id,
+                                        Cards.user == current_user
+                                        ).first()
+    if cards:
+        db_sess.delete(cards)
+        db_sess.commit()
+    else:
+        abort(404)
+    return redirect('/cards_table')
+
+
+@app.route('/type_operation_delete/<int:id>', methods=['GET', 'POST'])
+@login_required
+def type_operation_delete(id):
+    db_sess = db_session.create_session()
+    type_operation = db_sess.query(Type_of_operation).filter(Type_of_operation.id == id,
+                                                             Type_of_operation.user == current_user
+                                                             ).first()
+    if type_operation:
+        db_sess.delete(type_operation)
+        db_sess.commit()
+    else:
+        abort(404)
+    return redirect('/type_operation_table')
+
+
+@app.route('/owner_money_delete/<int:id>', methods=['GET', 'POST'])
+@login_required
+def owner_money_delete(id):
+    db_sess = db_session.create_session()
+    owner_money = db_sess.query(Owner_money).filter(Owner_money.id == id,
+                                                    Owner_money.user == current_user
+                                                    ).first()
+    if owner_money:
+        db_sess.delete(owner_money)
+        db_sess.commit()
+    else:
+        abort(404)
+    return redirect('/owner_money_table')
+
+
+@app.route('/resource_delete/<int:id>', methods=['GET', 'POST'])
+@login_required
+def resource_delete(id):
+    db_sess = db_session.create_session()
+    resource = db_sess.query(Resource).filter(Resource.id == id,
+                                                    Resource.user == current_user
+                                                    ).first()
+    if resource:
+        db_sess.delete(resource)
+        db_sess.commit()
+    else:
+        abort(404)
+    return redirect('/resource_table')
 
 
 if __name__ == '__main__':

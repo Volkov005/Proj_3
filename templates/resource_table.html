@@ -3,6 +3,7 @@
 {% block content %}
 <h1><b>Типы ресурсов</b></h1>
 <a href="resource" class="btn btn-secondary">Внести изменения в resource</a>
+<h1></h1>
 {% for item in resource[::-1] %}
 <div class="col-md6 border rounded">
     <h2>{{item.title}}</h2>
@@ -12,6 +13,16 @@
     <div>
         Автор - {{item.user.name}}
     </div>
+            {% if current_user.is_authenticated and current_user == item.user %}
+    <div>
+        <a href="/resource/{{ item.id }}" class="btn btn-warning">
+            Изменить
+        </a>
+        <a href="/resource_delete/{{ item.id }}" class="btn btn-danger">
+            Удалить
+        </a>
+    </div>
+{% endif %}
 </div>
 {% endfor %}
 {% endblock %}
