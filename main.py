@@ -6,11 +6,13 @@ from werkzeug.utils import redirect
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from data import db_session
 from data.cards import Cards
+from data.operations import Operations
 from data.owner_money_class import Owner_money
 from data.resources import Resource
 from data.type_operations import Type_of_operation
 from data.users import User
 from forms.card import CardForm
+from forms.operation import OperationForm
 from forms.owner_money import Owner_moneyForm
 from forms.resource import ResourceForm
 from forms.type_operation import Type_OperationForm
@@ -387,6 +389,43 @@ def resource_delete(id):
     else:
         abort(404)
     return redirect('/resource_table')
+
+
+# Закончились справочники!
+# Закончились справочники!
+# Закончились справочники!
+# Закончились справочники!
+# Закончились справочники!
+
+
+@app.route('/operations', methods=['GET', 'POST'])
+@login_required
+def add_operation():
+    form = OperationForm()
+
+    db_sess = db_session.create_session()
+    cards = db_sess.query(Cards).filter(Cards.user_id == current_user.id)
+    form.card.choices = [i.title for i in cards]
+
+    if form.validate_on_submit():
+        db_sess = db_session.create_session()
+        operation = Operations  ()
+
+        if form.type_operation.data == 'Приход':
+            operation.type_operation_id = 1
+        elif form.type_operation.data == 'Расход':
+            operation.type_operation_id = 2
+        else:
+            operation.type_operation_id = 3
+
+        operation.created_date = form.date_time.data
+
+        current_user.operations.append(operation)
+        db_sess.merge(current_user)
+        db_sess.commit()
+        return redirect('/')
+    return render_template('operations.html', title='Добавление операции',
+                           form=form)
 
 
 if __name__ == '__main__':

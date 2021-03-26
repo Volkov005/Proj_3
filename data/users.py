@@ -23,6 +23,7 @@ class User(SqlAlchemyBase, UserMixin):
     type_of_operation = orm.relation('Type_of_operation', back_populates='user')
     owner_money = orm.relation("Owner_money", back_populates='user')
     resource = orm.relation("Resource", back_populates='user')
+    operations = orm.relation('Operations', back_populates='user')
 
     def set_password(self, password):
         self.hashed_password = generate_password_hash(password)

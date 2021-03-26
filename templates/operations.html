@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Добавление Операции</h1>
+<form action="" method="post">
+    {{ form.hidden_tag() }}
+    <p>
+        {{ form.type_operation.label }}<br>
+        {{ form.type_operation(class="form-control") }}<br>
+        {% for error in form.type_operation.errors %}
+            <p class="alert alert-danger" role="alert">
+                {{ error }}
+            </p>
+        {% endfor %}
+    </p>
+    <p>
+        {{ form.date_time.label }}<br>
+        {{ form.date_time(class="form-control") }}<br>
+        {% for error in form.date_time.errors %}
+            <p content="alert alert-danger" role="alert">
+                {{ error }}
+            </p>
+        {% endfor %}
+    </p>
+    <p>
+        {{ form.sum.label }}<br>
+        {{ form.sum(class="form-control") }}<br>
+        {% for error in form.sum.errors %}
+            <p content="alert alert-danger" role="alert">
+                {{ error }}
+            </p>
+        {% endfor %}
+    </p>
+    <p>
+        {{ form.card.label }}<br>
+        {{ form.card(class="form-control") }}<br>
+        {% for error in form.card.errors %}
+            <p content="alert alert-danger" role="alert">
+                {{ error }}
+            </p>
+        {% endfor %}
+    </p>
+
+
+    <a>{{ form.submit(type="submit", class="btn btn-primary") }}</a>
+    <a href="/cards_table" class="btn btn-secondary">Отмена</a>
+    {{message}}
+</form>
+{% endblock %}
