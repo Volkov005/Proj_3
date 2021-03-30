@@ -1,7 +1,9 @@
 import datetime
+import sqlite3
 
 from flask import Flask, render_template, request
 from flask_restful import abort
+from sqlalchemy import create_engine
 from werkzeug.utils import redirect
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from data import db_session
@@ -9,6 +11,7 @@ from data.cards import Cards
 from data.operations import Operations
 from data.owner_money_class import Owner_money
 from data.resources import Resource
+from data.sub_operations import Sub_operation
 from data.type_operations import Type_of_operation
 from data.users import User
 from forms.card import CardForm
@@ -113,12 +116,7 @@ def add_type_operation():
         type_operations = Type_of_operation()
         type_operations.title = form.title.data
         type_operations.content = form.content.data
-        if form.type_operation.data == 'Приход':
-            type_operations.type_operation = 1
-        elif form.type_operation.data == 'Расход':
-            type_operations.type_operation = 2
-        else:
-            type_operations.type_operation = 3
+        type_operations.type_operation = form.type_operation.data
         current_user.type_of_operation.append(type_operations)
         db_sess.merge(current_user)
         db_sess.commit()
@@ -381,8 +379,8 @@ def owner_money_delete(id):
 def resource_delete(id):
     db_sess = db_session.create_session()
     resource = db_sess.query(Resource).filter(Resource.id == id,
-                                                    Resource.user == current_user
-                                                    ).first()
+                                              Resource.user == current_user
+                                              ).first()
     if resource:
         db_sess.delete(resource)
         db_sess.commit()
@@ -405,25 +403,46 @@ def add_operation():
 
     db_sess = db_session.create_session()
     cards = db_sess.query(Cards).filter(Cards.user_id == current_user.id)
-    form.card.choices = [i.title for i in cards]
+    type_operation = db_sess.query(Type_of_operation).filter(Type_of_operation.user_id == current_user.id)
+    form.card.choices = [(i.id, i.title) for i in cards]
+    form.type_operation.choices = [(i.id, i.title) for i in type_operation]
 
     if form.validate_on_submit():
-        db_sess = db_session.create_session()
-        operation = Operations  ()
+        create_engine('sqlite:///some.db', connect_args={'timeout': 999999})
+        con = sqlite3.connect('db/family_bud.sqlite')
+        cur = con.cursor()
+        result = cur.execute(f"""SELECT MAX(id) from operations""").fetchone()
+        cur.close()
 
-        if form.type_operation.data == 'Приход':
-            operation.type_operation_id = 1
-        elif form.type_operation.data == 'Расход':
-            operation.type_operation_id = 2
-        else:
-            operation.type_operation_id = 3
-
+        operation = Operations()
+        operation.type_operation_id = form.type_operation.data
         operation.created_date = form.date_time.data
 
         current_user.operations.append(operation)
         db_sess.merge(current_user)
+
+        sub_operation = Sub_operation()
+        if form.type_operation.data == '1':
+            sub_operation.prihod = form.sum.data
+            sub_operation.rashod = 0
+        elif form.type_operation.data == '2':
+            sub_operation.prihod = 0
+            sub_operation.rashod = form.sum.data
+            print(sub_operation.rashod)
+        else:
+            pass
+        print('11111111111111111111', form.type_operation.data)
+
+        sub_operation.id_operation = result[0] + 1 if result[0] is not None else 1
+        sub_operation.id_cards = form.card.data
+        sub_operation.user_id = current_user.id
+
+        current_user.sub_operations.append(sub_operation)
+
+        db_sess.merge(current_user)
         db_sess.commit()
-        return redirect('/')
+
+        # return redirect('/')
     return render_template('operations.html', title='Добавление операции',
                            form=form)
 

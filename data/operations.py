@@ -10,7 +10,7 @@ class Operations(SqlAlchemyBase):
 
     id = sqlalchemy.Column(sqlalchemy.Integer,
                            primary_key=True, autoincrement=True)
-    created_date = sqlalchemy.Column(sqlalchemy.DateTime,
+    created_date = sqlalchemy.Column(sqlalchemy.Date,
                                      default=datetime.date.today())
     type_operation_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('type_of_operation.id'))
 
