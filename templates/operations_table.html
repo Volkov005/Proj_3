@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1><b>Операции</b></h1>
+<a href="/" class="btn btn-success">Вернуться</a>
+<a href="operations" class="btn btn-secondary">Добавить Операцию</a>
+<h1></h1>
+{% for item in operations[::-1]%}
+<div class="col-md6 border rounded">
+    <h2></h2>
+    {% for i in type_operation %}
+        {% if i.id == item.type_operation_id %}
+    <div>
+        <h4><b>{{ i.title }}</b></h4>
+    </div>
+    {% endif %}
+    {% endfor %}
+        <div>
+        Дата операции: {{ item.create_date }}
+    </div>
+    <h2></h2>
+    {% for sub_oper in sub_operation %}
+    {% for card in cards %}
+    {% if sub_oper.id_cards == card.id and sub_oper.id_operation == item.id %}
+    <div>
+        Карта - {{ card.title }}
+        <h2></h2>
+        Примечание: {{ card.content }}
+    </div>
+    {% endif %}
+    {% endfor %}
+    {% endfor %}
+    <h2></h2>
+    {% for i in type_operation %}
+        {% if i.id == item.type_operation_id %}
+    <div>
+        Автор - {{item.user.name}}
+        <h1></h1>
+        Примечание: {{ i.content }}
+    </div>
+    {% endif %}
+    {% endfor %}
+    <h1></h1>
+    {% for sub_oper in sub_operation %}
+    {% if sub_oper.id_operation == item.id %}
+    <div>
+        Приход: {{ sub_oper.prihod }}
+        <h4></h4>
+        Расход: {{ sub_oper.rashod }}
+    </div>
+    {% endif %}
+    {% endfor %}
+    <h1></h1>
+        {% if current_user.is_authenticated and current_user == item.user %}
+    <div>
+        <a href="/operations/{{ item.id }}" class="btn btn-warning">
+            Изменить
+        </a>
+        <a href="/operations_delete/{{ item.id }}" class="btn btn-danger">
+            Удалить
+        </a>
+    </div>
+{% endif %}
+</div>
+{% endfor %}
+{% endblock %}

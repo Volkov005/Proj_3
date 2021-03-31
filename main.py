@@ -408,7 +408,7 @@ def add_operation():
     form.type_operation.choices = [(i.id, i.title) for i in type_operation]
 
     if form.validate_on_submit():
-        create_engine('sqlite:///some.db', connect_args={'timeout': 999999})
+        create_engine('sqlite:///some.db', connect_args={'timeout': 10000})
         con = sqlite3.connect('db/family_bud.sqlite')
         cur = con.cursor()
         result = cur.execute(f"""SELECT MAX(id) from operations""").fetchone()
@@ -423,16 +423,13 @@ def add_operation():
 
         sub_operation = Sub_operation()
         if form.type_operation.data == '1':
-            sub_operation.prihod = form.sum.data
+            sub_operation.prihod = form.sum.data if form.sum.data != '' else 0
             sub_operation.rashod = 0
         elif form.type_operation.data == '2':
             sub_operation.prihod = 0
-            sub_operation.rashod = form.sum.data
-            print(sub_operation.rashod)
+            sub_operation.rashod = form.sum.data if form.sum.data != '' else 0
         else:
             pass
-        print('11111111111111111111', form.type_operation.data)
-
         sub_operation.id_operation = result[0] + 1 if result[0] is not None else 1
         sub_operation.id_cards = form.card.data
         sub_operation.user_id = current_user.id
@@ -442,9 +439,94 @@ def add_operation():
         db_sess.merge(current_user)
         db_sess.commit()
 
-        # return redirect('/')
+        return redirect('/operations_table')
     return render_template('operations.html', title='Добавление операции',
                            form=form)
+
+
+@app.route('/operations_table')
+def get_operations_table():
+    db_sess = db_session.create_session()
+    operations = db_sess.query(Operations).filter(Operations.user_id == current_user.id)
+    type_operation = db_sess.query(Type_of_operation).filter(Type_of_operation.user_id == current_user.id)
+    cards = db_sess.query(Cards).filter(Cards.user_id == current_user.id)
+    sub_operation = db_sess.query(Sub_operation).filter(Sub_operation.user_id == current_user.id)
+    return render_template("operations_table.html", operations=operations, type_operation=type_operation,
+                           cards=cards, sub_operation=sub_operation)
+
+
+@app.route('/operations_delete/<int:id>', methods=['GET', 'POST'])
+@login_required
+def news_delete(id):
+    db_sess = db_session.create_session()
+    operations = db_sess.query(Operations).filter(Operations.id == id,
+                                                  Operations.user == current_user
+                                                  ).first()
+    sub_operations = db_sess.query(Sub_operation).filter(Sub_operation.id == id == Operations.id,
+                                                         Sub_operation.user == current_user
+                                                         ).first()
+    if operations and sub_operations:
+        db_sess.delete(operations)
+        db_sess.delete(sub_operations)
+        db_sess.commit()
+    else:
+        abort(404)
+    return redirect('/operations_table')
+
+
+@app.route('/operations/<int:id>', methods=['GET', 'POST'])
+@login_required
+def edit_operation(id):
+    form = OperationForm()
+    if request.method == "GET":
+        db_sess = db_session.create_session()
+        cards = db_sess.query(Cards).filter(Cards.user_id == current_user.id)
+        type_operation = db_sess.query(Type_of_operation).filter(Type_of_operation.user_id == current_user.id)
+        form.card.choices = [(i.id, i.title) for i in cards]
+        form.type_operation.choices = [(i.id, i.title) for i in type_operation]
+        operation = db_sess.query(Operations).filter(Operations.id == id,
+                                                     Operations.user == current_user
+                                                     ).first()
+        sub_operation = db_sess.query(Sub_operation).filter(Sub_operation.id == id == Operations.id,
+                                                            Sub_operation.user == current_user).first()
+
+        if operation and sub_operation:
+            form.type_operation.data = operation.type_operation_id
+            form.date_time.data = operation.created_date
+            form.sum.data = sub_operation.rashod if sub_operation.rashod != 0 else sub_operation.prihod
+            form.card.data = sub_operation.id_cards
+            print(1111111111111111, form.card.data)
+        else:
+            abort(404)
+    if form.validate_on_submit():
+        db_sess = db_session.create_session()
+        operation = db_sess.query(Operations).filter(Operations.id == id,
+                                                     Operations.user == current_user
+                                                     ).first()
+        sub_operation = db_sess.query(Sub_operation).filter(Sub_operation.id == id == Operations.id,
+                                                            Sub_operation.user == current_user).first()
+        if operation and sub_operation:
+            operation.type_operation_id = form.type_operation.data
+            operation.created_date = form.date_time.data
+            if form.type_operation.data == '1':
+                sub_operation.prihod = form.sum.data if form.sum.data != '' else 0
+                sub_operation.rashod = 0
+            elif form.type_operation.data == '2':
+                sub_operation.prihod = 0
+                sub_operation.rashod = form.sum.data if form.sum.data != '' else 0
+            else:
+                pass
+            sub_operation.id_cards = form.card.data
+            sub_operation.user_id = current_user.id
+
+            db_sess.commit()
+            return redirect('/operations_table')
+        else:
+            abort(404)
+    return render_template('operations.html',
+                           title='Редактирование операции',
+                           form=form
+                           )
 
 
 if __name__ == '__main__':
