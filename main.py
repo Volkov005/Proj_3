@@ -429,10 +429,15 @@ def add_operation():
             sub_operation.prihod = 0
             sub_operation.rashod = form.sum.data if form.sum.data != '' else 0
         else:
-            pass
+            sub_operation.prihod = 0
+            sub_operation.rashod = 0
+
         sub_operation.id_operation = result[0] + 1 if result[0] is not None else 1
         sub_operation.id_cards = form.card.data
         sub_operation.user_id = current_user.id
+        card = db_sess.query(Cards).filter(Cards.id == sub_operation.id_cards).first()
+        card.balance += int(sub_operation.prihod)
+        card.balance -= int(sub_operation.rashod)
 
         current_user.sub_operations.append(sub_operation)
 
@@ -487,7 +492,7 @@ def edit_operation(id):
         operation = db_sess.query(Operations).filter(Operations.id == id,
                                                      Operations.user == current_user
                                                      ).first()
-        sub_operation = db_sess.query(Sub_operation).filter(Sub_operation.id == id == Operations.id,
+        sub_operation = db_sess.query(Sub_operation).filter(Sub_operation.id == id == operation.id,
                                                             Sub_operation.user == current_user).first()
 
         if operation and sub_operation:
@@ -495,7 +500,6 @@ def edit_operation(id):
             form.date_time.data = operation.created_date
             form.sum.data = sub_operation.rashod if sub_operation.rashod != 0 else sub_operation.prihod
             form.card.data = sub_operation.id_cards
-            print(1111111111111111, form.card.data)
         else:
             abort(404)
     if form.validate_on_submit():
@@ -506,6 +510,9 @@ def edit_operation(id):
         sub_operation = db_sess.query(Sub_operation).filter(Sub_operation.id == id == Operations.id,
                                                             Sub_operation.user == current_user).first()
         if operation and sub_operation:
+            card = db_sess.query(Cards).filter(Cards.id == sub_operation.id_cards).first()
+            card.balance -= float(sub_operation.prihod)
+            card.balance += float(sub_operation.rashod)
             operation.type_operation_id = form.type_operation.data
             operation.created_date = form.date_time.data
             if form.type_operation.data == '1':
@@ -518,6 +525,10 @@ def edit_operation(id):
                 pass
             sub_operation.id_cards = form.card.data
             sub_operation.user_id = current_user.id
+            card = db_sess.query(Cards).filter(Cards.id == sub_operation.id_cards).first()
+            card.balance += float(sub_operation.prihod)
+            card.balance -= float(sub_operation.rashod)
+            print(operation.created_date)
 
             db_sess.commit()
             return redirect('/operations_table')

@@ -12,7 +12,10 @@
         {{item.content}}
     </div>
     <div>
-        Автор - {{item.user.name}}, Дата написания - {{item.created_date}}
+        Автор - {{item.user.name}}, Дата написания - {{ item.created_date }}
+    </div>
+    <div>
+        Остаток - {{ item.balance }} руб
     </div>
     {% if current_user.is_authenticated and current_user == item.user %}
     <div>
