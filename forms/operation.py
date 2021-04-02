@@ -8,4 +8,6 @@ class OperationForm(FlaskForm):
     date_time = DateField('Дата, в формате: год(последние 2 цыфры)-месяц-день', format='%y-%m-%d')
     sum = StringField("Сумма")
     card = SelectField('Карта', validate_choice=False)
+    card_from = SelectField('Карта', validate_choice=False)
+    card_to = SelectField('Карта', validate_choice=False)
     submit = SubmitField('Применить')

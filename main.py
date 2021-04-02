@@ -405,6 +405,8 @@ def add_operation():
     cards = db_sess.query(Cards).filter(Cards.user_id == current_user.id)
     type_operation = db_sess.query(Type_of_operation).filter(Type_of_operation.user_id == current_user.id)
     form.card.choices = [(i.id, i.title) for i in cards]
+    form.card_from.choices = [(i.id, i.title) for i in cards]
+    form.card_to.choices = [(i.id, i.title) for i in cards]
     form.type_operation.choices = [(i.id, i.title) for i in type_operation]
 
     if form.validate_on_submit():
@@ -528,7 +530,6 @@ def edit_operation(id):
             card = db_sess.query(Cards).filter(Cards.id == sub_operation.id_cards).first()
             card.balance += float(sub_operation.prihod)
             card.balance -= float(sub_operation.rashod)
-            print(operation.created_date)
 
             db_sess.commit()
             return redirect('/operations_table')

@@ -1,11 +1,16 @@
 {% extends "base.html" %}
 
 {% block content %}
+<style>
+        body { background: url(https://365psd.ru/images/backgrounds/wood-texture-124.jpg); }
+</style>
         {% if current_user.is_authenticated %}
+<h1><b>Вы можете начать работу!</b></h1>
+
                 <a href="operations_table" class="btn btn-secondary">Операции</a>
 
 
-                <h1><b>Справочники</b></h1>
+                <h2><b>Справочники</b></h2>
                 <a href="cards_table" class="btn btn-secondary">Карты</a>
                 <h1></h1>
                 <a href="type_operation_table" class="btn btn-secondary">Типы операций</a>

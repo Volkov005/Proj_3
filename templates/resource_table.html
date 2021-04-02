@@ -1,9 +1,13 @@
 {% extends "base.html" %}
 
 {% block content %}
+    <style>
+        body { background: url(https://365psd.ru/images/backgrounds/wood-texture-124.jpg); }
+        div { background: url(https://365psd.ru/images/backgrounds/leather_light.jpg) }
+</style>
 <h1><b>Типы ресурсов</b></h1>
-<a href="/" class="btn btn-success">Вернуться</a>
-<a href="resource" class="btn btn-secondary">Добавить источник</a>
+<a href="/" class="btn btn-secondary">Вернуться</a>
+<a href="resource" class="btn btn-success">Добавить источник</a>
 <h1></h1>
 {% for item in resource[::-1] %}
 <div class="col-md6 border rounded">
@@ -22,6 +26,7 @@
         <a href="/resource_delete/{{ item.id }}" class="btn btn-danger">
             Удалить
         </a>
+        <h1></h1>
     </div>
 {% endif %}
 </div>
