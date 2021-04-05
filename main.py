@@ -3,7 +3,7 @@ import sqlite3
 
 from flask import Flask, render_template, request
 from flask_restful import abort
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, desc
 from werkzeug.utils import redirect
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from data import db_session
@@ -104,7 +104,7 @@ def add_cards():
         db_sess.commit()
         return redirect('/cards_table')
     return render_template('cards.html', title='Добавление карты',
-                           form=form)
+                           form=form, trigger="Добавление")
 
 
 @app.route('/type_operation', methods=['GET', 'POST'])
@@ -162,8 +162,9 @@ def add_resource():
 @app.route('/cards_table')
 def get_cards_table():
     db_sess = db_session.create_session()
-    cards = db_sess.query(Cards).filter(Cards.user_id == current_user.id)
-    return render_template("cards_table.html", cards=cards)
+    cards = db_sess.query(Cards).filter(Cards.user_id == current_user.id).order_by(Cards.created_date)
+    sub_oper = db_sess.query(Sub_operation).filter(Sub_operation.user_id == current_user.id)
+    return render_template("cards_table.html", cards=cards, sub_oper=sub_oper)
 
 
 @app.route('/type_operation_table')
@@ -199,6 +200,7 @@ def edit_cards(id):
         if cards:
             form.title.data = cards.title
             form.content.data = cards.content
+            form.balance.data = cards.balance
         else:
             abort(404)
     if form.validate_on_submit():
@@ -216,7 +218,8 @@ def edit_cards(id):
             abort(404)
     return render_template('cards.html',
                            title='Редактирование новости',
-                           form=form
+                           form=form,
+                           trigger="Редактирование",
                            )
 
 
@@ -403,11 +406,12 @@ def add_operation():
 
     db_sess = db_session.create_session()
     cards = db_sess.query(Cards).filter(Cards.user_id == current_user.id)
-    type_operation = db_sess.query(Type_of_operation).filter(Type_of_operation.user_id == current_user.id)
-    form.card.choices = [(i.id, i.title) for i in cards]
+    type_operation = db_sess.query(Type_of_operation).filter(Type_of_operation.user_id == current_user.id). \
+        order_by(desc(Type_of_operation.type_operation))
+    form.card.choices = [(i.id, f'{i.title}') for i in cards]
     form.card_from.choices = [(i.id, i.title) for i in cards]
     form.card_to.choices = [(i.id, i.title) for i in cards]
-    form.type_operation.choices = [(i.id, i.title) for i in type_operation]
+    form.type_operation.choices = [(i.type_operation, f'{i.title} (Тип - {i.type_operation})') for i in type_operation]
 
     if form.validate_on_submit():
         create_engine('sqlite:///some.db', connect_args={'timeout': 10000})
@@ -424,6 +428,7 @@ def add_operation():
         db_sess.merge(current_user)
 
         sub_operation = Sub_operation()
+        print(form.type_operation.data)
         if form.type_operation.data == '1':
             sub_operation.prihod = form.sum.data if form.sum.data != '' else 0
             sub_operation.rashod = 0
@@ -438,8 +443,10 @@ def add_operation():
         sub_operation.id_cards = form.card.data
         sub_operation.user_id = current_user.id
         card = db_sess.query(Cards).filter(Cards.id == sub_operation.id_cards).first()
-        card.balance += int(sub_operation.prihod)
-        card.balance -= int(sub_operation.rashod)
+        card.balance += float(str(sub_operation.prihod).replace(',', '.')) if ',' in str(sub_operation.prihod)\
+            else float(sub_operation.prihod)
+        card.balance -= float(str(sub_operation.rashod).replace(',', '.')) if ',' in str(sub_operation.rashod)\
+            else float(sub_operation.rashod)
 
         current_user.sub_operations.append(sub_operation)
 
@@ -464,7 +471,7 @@ def get_operations_table():
 
 @app.route('/operations_delete/<int:id>', methods=['GET', 'POST'])
 @login_required
-def news_delete(id):
+def operation_delete(id):
     db_sess = db_session.create_session()
     operations = db_sess.query(Operations).filter(Operations.id == id,
                                                   Operations.user == current_user
@@ -472,9 +479,12 @@ def news_delete(id):
     sub_operations = db_sess.query(Sub_operation).filter(Sub_operation.id == id == Operations.id,
                                                          Sub_operation.user == current_user
                                                          ).first()
-    if operations and sub_operations:
+    card = db_sess.query(Cards).filter(Cards.id == sub_operations.id_cards, Cards.user_id == current_user.id).first()
+    if operations and sub_operations and card:
         db_sess.delete(operations)
         db_sess.delete(sub_operations)
+        card.balance -= sub_operations.prihod
+        card.balance += sub_operations.rashod
         db_sess.commit()
     else:
         abort(404)
@@ -488,7 +498,8 @@ def edit_operation(id):
     if request.method == "GET":
         db_sess = db_session.create_session()
         cards = db_sess.query(Cards).filter(Cards.user_id == current_user.id)
-        type_operation = db_sess.query(Type_of_operation).filter(Type_of_operation.user_id == current_user.id)
+        type_operation = db_sess.query(Type_of_operation).filter(Type_of_operation.user_id == current_user.id).\
+            order_by(Type_of_operation.type_operation)
         form.card.choices = [(i.id, i.title) for i in cards]
         form.type_operation.choices = [(i.id, i.title) for i in type_operation]
         operation = db_sess.query(Operations).filter(Operations.id == id,
@@ -537,8 +548,25 @@ def edit_operation(id):
             abort(404)
     return render_template('operations.html',
                            title='Редактирование операции',
-                           form=form
+                           form=form,
                            )
+
+
+@app.route('/reload_cards_balance')
+def reload_cards_balance():
+    db_sess = db_session.create_session()
+    cards = db_sess.query(Cards).filter(Cards.user_id == current_user.id)
+    sub_operation = db_sess.query(Sub_operation).filter(Sub_operation.user_id == current_user.id)
+    for i in cards:
+        i.balance = 0
+    for i in cards:
+        for j in sub_operation:
+            if j.id_cards == i.id:
+                i.balance += j.prihod
+                i.balance -= j.rashod
+    db_sess.commit()
+    return redirect('/cards_table')
+
 
 
 if __name__ == '__main__':

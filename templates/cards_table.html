@@ -9,7 +9,17 @@
 <a href="/" class="btn btn-secondary">Вернуться</a>
 <a href="cards" class="btn btn-success">Добавить карту</a>
 <h1></h1>
-{% for item in cards[::-1]%}
+<style>
+    p {
+        font-size: 15px
+    }
+</style>
+
+<a href="/reload_cards_balance" class="btn btn-info">Пересчетать баланс карт</a>
+<p>Если баланс расходится с истинным, пересчетайте его</p>
+
+<h1></h1>
+{% for item in cards%}
 <div class="col-md6 border rounded">
 
     <h2>{{item.title}}</h2>
@@ -17,10 +27,10 @@
         {{item.content}}
     </div>
     <div>
-        Автор - {{item.user.name}}, Дата написания - {{ item.created_date }}
+        Автор - {{item.user.name}}, Дата создания - {{ item.created_date }}
     </div>
     <div>
-        <b>Остаток - {{ item.balance }} руб</b>
+        <b>Остаток: {{ item.balance }} руб</b>
     </div>
     {% if current_user.is_authenticated and current_user == item.user %}
     <div>
@@ -34,5 +44,6 @@
     </div>
 {% endif %}
 </div>
+<h1></h1>
 {% endfor %}
 {% endblock %}

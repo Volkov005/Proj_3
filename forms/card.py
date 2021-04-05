@@ -5,6 +5,7 @@ from wtforms.validators import DataRequired
 
 
 class CardForm(FlaskForm):
-    title = StringField('Заголовок', validators=[DataRequired()])
-    content = TextAreaField("Содержание")
-    submit = SubmitField('Применить')
+    title = StringField('Название карты', validators=[DataRequired()])
+    content = TextAreaField("Примечание")
+    balance = TextAreaField('Изменить баланс')
+    submit = SubmitField('Сохранить')
