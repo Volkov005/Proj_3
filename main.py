@@ -408,45 +408,49 @@ def add_operation():
     cards = db_sess.query(Cards).filter(Cards.user_id == current_user.id)
     type_operation = db_sess.query(Type_of_operation).filter(Type_of_operation.user_id == current_user.id). \
         order_by(desc(Type_of_operation.type_operation))
-    form.card.choices = [(i.id, f'{i.title}') for i in cards]
+    form.card.choices = [(i.id, i.title) for i in cards]
     form.card_from.choices = [(i.id, i.title) for i in cards]
     form.card_to.choices = [(i.id, i.title) for i in cards]
-    form.type_operation.choices = [(i.type_operation, f'{i.title} (Тип - {i.type_operation})') for i in type_operation]
+    form.type_operation.choices = [(i.id, f'{i.title} (Тип - {i.type_operation})') for i in type_operation]
 
     if form.validate_on_submit():
         create_engine('sqlite:///some.db', connect_args={'timeout': 10000})
-        con = sqlite3.connect('db/family_bud.sqlite')
-        cur = con.cursor()
-        result = cur.execute(f"""SELECT MAX(id) from operations""").fetchone()
-        cur.close()
 
         operation = Operations()
         operation.type_operation_id = form.type_operation.data
         operation.created_date = form.date_time.data
+        operation.content = form.content.data
 
         current_user.operations.append(operation)
+        db_sess.flush()
         db_sess.merge(current_user)
 
         sub_operation = Sub_operation()
-        print(form.type_operation.data)
-        if form.type_operation.data == '1':
+
+        type_oper = db_sess.query(Type_of_operation).filter(Type_of_operation.user_id == current_user.id,
+                                                            form.type_operation.data == Type_of_operation.id).first()
+
+        if type_oper.type_operation == 1:
             sub_operation.prihod = form.sum.data if form.sum.data != '' else 0
             sub_operation.rashod = 0
-        elif form.type_operation.data == '2':
+        elif type_oper.type_operation == 2:
             sub_operation.prihod = 0
             sub_operation.rashod = form.sum.data if form.sum.data != '' else 0
         else:
             sub_operation.prihod = 0
             sub_operation.rashod = 0
 
-        sub_operation.id_operation = result[0] + 1 if result[0] is not None else 1
+        sub_operation.id_operation = operation.id
         sub_operation.id_cards = form.card.data
         sub_operation.user_id = current_user.id
         card = db_sess.query(Cards).filter(Cards.id == sub_operation.id_cards).first()
-        card.balance += float(str(sub_operation.prihod).replace(',', '.')) if ',' in str(sub_operation.prihod)\
-            else float(sub_operation.prihod)
-        card.balance -= float(str(sub_operation.rashod).replace(',', '.')) if ',' in str(sub_operation.rashod)\
-            else float(sub_operation.rashod)
+        if card:
+            card.balance += float(str(sub_operation.prihod).replace(',', '.')) if ',' in str(sub_operation.prihod) \
+                else float(sub_operation.prihod)
+            card.balance -= float(str(sub_operation.rashod).replace(',', '.')) if ',' in str(sub_operation.rashod) \
+                else float(sub_operation.rashod)
+        else:
+            return redirect('/operations')
 
         current_user.sub_operations.append(sub_operation)
 
@@ -483,8 +487,8 @@ def operation_delete(id):
     if operations and sub_operations and card:
         db_sess.delete(operations)
         db_sess.delete(sub_operations)
-        card.balance -= sub_operations.prihod
-        card.balance += sub_operations.rashod
+        card.balance -= float(sub_operations.prihod)
+        card.balance += float(sub_operations.rashod)
         db_sess.commit()
     else:
         abort(404)
@@ -498,10 +502,10 @@ def edit_operation(id):
     if request.method == "GET":
         db_sess = db_session.create_session()
         cards = db_sess.query(Cards).filter(Cards.user_id == current_user.id)
-        type_operation = db_sess.query(Type_of_operation).filter(Type_of_operation.user_id == current_user.id).\
+        type_operation = db_sess.query(Type_of_operation).filter(Type_of_operation.user_id == current_user.id). \
             order_by(Type_of_operation.type_operation)
         form.card.choices = [(i.id, i.title) for i in cards]
-        form.type_operation.choices = [(i.id, i.title) for i in type_operation]
+        form.type_operation.choices = [(i.id, f'{i.title} (Тип - {i.type_operation})') for i in type_operation]
         operation = db_sess.query(Operations).filter(Operations.id == id,
                                                      Operations.user == current_user
                                                      ).first()
@@ -509,10 +513,11 @@ def edit_operation(id):
                                                             Sub_operation.user == current_user).first()
 
         if operation and sub_operation:
-            form.type_operation.data = operation.type_operation_id
+            form.type_operation.data = str(operation.type_operation_id)
             form.date_time.data = operation.created_date
             form.sum.data = sub_operation.rashod if sub_operation.rashod != 0 else sub_operation.prihod
-            form.card.data = sub_operation.id_cards
+            form.card.data = str(sub_operation.id_cards)
+            form.content.data = operation.content
         else:
             abort(404)
     if form.validate_on_submit():
@@ -528,12 +533,14 @@ def edit_operation(id):
             card.balance += float(sub_operation.rashod)
             operation.type_operation_id = form.type_operation.data
             operation.created_date = form.date_time.data
-            if form.type_operation.data == '1':
-                sub_operation.prihod = form.sum.data if form.sum.data != '' else 0
+            type = db_sess.query(Type_of_operation).filter(Type_of_operation.id ==
+                                                           int(form.type_operation.data)).first()
+            if int(type.type_operation) == 1:
+                sub_operation.prihod = float(form.sum.data) if form.sum.data != '' else 0
                 sub_operation.rashod = 0
-            elif form.type_operation.data == '2':
+            elif int(type.type_operation) == 2:
                 sub_operation.prihod = 0
-                sub_operation.rashod = form.sum.data if form.sum.data != '' else 0
+                sub_operation.rashod = float(form.sum.data) if form.sum.data != '' else 0
             else:
                 pass
             sub_operation.id_cards = form.card.data
@@ -562,11 +569,10 @@ def reload_cards_balance():
     for i in cards:
         for j in sub_operation:
             if j.id_cards == i.id:
-                i.balance += j.prihod
-                i.balance -= j.rashod
+                i.balance += float(j.prihod)
+                i.balance -= float(j.rashod)
     db_sess.commit()
     return redirect('/cards_table')
-
 
 
 if __name__ == '__main__':

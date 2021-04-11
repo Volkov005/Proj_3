@@ -5,6 +5,6 @@ from wtforms.validators import DataRequired
 
 
 class ResourceForm(FlaskForm):
-    title = StringField('Заголовок', validators=[DataRequired()])
-    content = TextAreaField("Содержание")
+    title = StringField('Заголовок', validators=[DataRequired()], render_kw={'autofocus': True})
+    content = TextAreaField("Примечание")
     submit = SubmitField('Применить')

@@ -11,8 +11,9 @@ class Operations(SqlAlchemyBase):
     id = sqlalchemy.Column(sqlalchemy.Integer,
                            primary_key=True, autoincrement=True)
     created_date = sqlalchemy.Column(sqlalchemy.Date,
-                                     default=datetime.datetime.utcnow())
+                                     default=datetime.date.today())
     type_operation_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('type_of_operation.id'))
+    content = sqlalchemy.Column(sqlalchemy.String, nullable=True)
 
     user_id = sqlalchemy.Column(sqlalchemy.Integer,
                                 sqlalchemy.ForeignKey("users.id"))
