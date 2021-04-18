@@ -5,7 +5,7 @@
         body { background: url(https://365psd.ru/images/backgrounds/wood-texture-124.jpg); }
         div { background: url(https://365psd.ru/images/backgrounds/leather_light.jpg); }
         table { background: url(https://365psd.ru/images/backgrounds/leather_light.jpg);
-                width: 120%;
+                width: 100%;
          }
         .col1 {
             width: 80px; /* Ширина ячейки */
@@ -15,25 +15,33 @@
 <a href="/" class="btn btn-secondary">Вернуться</a>
 <a href="operations" class="btn btn-success">Добавить операцию</a>
 <h5>Фильтры</h5>
-<form action="{{ url_for('get_operations_table') }}" method="post" enctype="multipart/form-data">
-    Дата
-  <select name="date_select">
-    <option value="0">Сначала новые</option>
-      <option value="1">Сначала старые</option>
-  </select>Тип операций
-<select name="type_operation_select">
-    <option>Нет</option>
-    <option>Приход</option>
-    <option>Расход</option>
-</select>
-Карты
-<select>
-    {% for card in cards %}
-    <option value="{{ card.id }}">{{ card.title }}</option>
-    {% endfor %}
-</select>
+<form action="" method="post">
+    {{ form.hidden_tag() }}
+        Дата
+            {{ form.date()}}
+        {% for error in form.date.errors %}
+            <p content="alert alert-danger" role="alert">
+                {{ error }}
+            </p>
+        {% endfor %}
+        Карта
+        {{ form.card() }}
+        {% for error in form.card.errors %}
+            <p content="alert alert-danger" role="alert">
+                {{ error }}
+            </p>
+        {% endfor %}
+    Типы операций
+        {{ form.type_operation_filter() }}
+        {% for error in form.type_operation_filter.errors %}
+            <p content="alert alert-danger" role="alert">
+                {{ error }}
+            </p>
+        {% endfor %}
     <h1></h1>
-  <input type="submit" value="Применить" formmethod="post">
+
+    <a>{{ form.submit(type="submit", class="btn btn-info btn-sm") }}</a>
+    <a href="/operations_table" class="btn btn-secondary btn-sm">Очистить фильтры</a>
 </form>
 <h1></h1>
 <table border="1">

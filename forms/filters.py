@@ -1,12 +1,24 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+
 from flask_wtf import FlaskForm
 from wtforms import SelectField
 from wtforms import SubmitField
 
 
-class FiltersForm(FlaskForm):
-    # type_operation = SelectField('Тип операции  (1 - Приход, 2 - Расход, 3 - Универсал)', validate_choice=False)
-    date = SelectField("Дата", choices=[(1, "Сначала новые"), (2, "Сначала старые")])
-    type_operation = SelectField('Тип операции', choices=[(0, 'Нет'), (1, 'Приход'), (2, 'Расход')],
-                                 validate_choice=False)
-    card = SelectField("Карта", validate_choice=False)
-    submit = SubmitField("Применить")
+class Filters1Form(FlaskForm):
+    # type_operation = SelectField('РўРёРї РѕРїРµСЂР°С†РёРё  (1 - РџСЂРёС…РѕРґ, 2 - Р Р°СЃС…РѕРґ, 3 - РЈРЅРёРІРµСЂСЃР°Р»)', validate_choice=False)
+    date = SelectField(choices=[(0, "РЎРЅР°С‡Р°Р»Р° РЅРѕРІС‹Рµ"), (1, "РЎРЅР°С‡Р°Р»Р° СЃС‚Р°СЂС‹Рµ")], default=0)
+    card = SelectField(default=0, validate_choice=False)
+    type_operation_filter = SelectField(choices=[(0, 'Р’СЃРµ'), (1, 'РЎРЅР°С‡Р°Р»Р° РџСЂРёС…РѕРґ'), (2, 'РЎРЅР°С‡Р°Р»Р° Р Р°СЃС…РѕРґ'),
+                                                 (3, 'РўРѕР»СЊРєРѕ РџСЂРёС…РѕРґ'), (4, 'РўРѕР»СЊРєРѕ Р Р°СЃС…РѕРґ')], default=0)
+    submit = SubmitField("РћС‚С„РёР»СЊС‚СЂРѕРІР°С‚СЊ")
+
+
+class FiltersForm(Filters1Form):
+    form_widget_args = {
+        'description': {
+            'rows': 10,
+        }
+    }
