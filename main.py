@@ -1,5 +1,5 @@
 import datetime
-
+import sqlite3
 from flask import Flask, render_template, request
 from flask_restful import abort
 from sqlalchemy import create_engine, desc
@@ -486,38 +486,65 @@ def get_operations_table():
     form = FiltersForm()
     form.card.choices = [(i.id, i.title) for i in db_sess.query(Cards).filter(Cards.user_id == current_user.id)]
     form.card.choices.insert(0, (0, 'Все'))
-    operations = db_sess.query(Operations).filter(Operations.user_id == current_user.id) \
-        .order_by(desc(Operations.created_date))
-    type_operation = db_sess.query(Type_of_operation).filter(Type_of_operation.user_id == current_user.id)
-    cards = db_sess.query(Cards).filter(Cards.user_id == current_user.id)
-    sub_operation = db_sess.query(Sub_operation).filter(Sub_operation.user_id == current_user.id)
+    con = sqlite3.connect('db/family_bud.sqlite')
+    cur = con.cursor()
+    where = ''
+    order = 'operations.created_date DESC'
 
     if form.validate_on_submit():
-        if int(form.card.data):
-            cards = db_sess.query(Cards).filter(Cards.user_id == current_user.id, Cards.id == int(form.card.data))
+        con = sqlite3.connect('db/family_bud.sqlite')
+        cur = con.cursor()
         if int(form.date.data):
-            operations = db_sess.query(Operations).filter(Operations.user_id == current_user.id) \
-                .order_by(Operations.created_date)
-        if int(form.type_operation_filter.data):
-            if int(form.type_operation_filter.data) == 1:
-                type_operation = db_sess.query(Type_of_operation).filter(Type_of_operation.user_id == current_user.id) \
-                    .order_by(Type_of_operation.type_operation)
-                print([i.type_operation for i in type_operation])
-                print(11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111)
-            elif int(form.type_operation_filter.data) == 2:
-                type_operation = db_sess.query(Type_of_operation).filter(Type_of_operation.user_id == current_user.id) \
-                    .order_by(desc(Type_of_operation.type_operation))
-                print([i.type_operation for i in type_operation])
-                print(11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111)
-            elif int(form.type_operation_filter.data) == 3:
-                type_operation = db_sess.query(Type_of_operation).filter(Type_of_operation.user_id == current_user.id,
-                                                                         Type_of_operation.type_operation == 1)
-            elif int(form.type_operation_filter.data) == 4:
-                type_operation = db_sess.query(Type_of_operation).filter(Type_of_operation.user_id == current_user.id,
-                                                                         Type_of_operation.type_operation == 2)
+            order = order[:-4]
+        if int(form.card.data):
+            where += f' and cards.id == {int(form.card.data)}'
+        if int(form.type_operation_filter.data) == 1:
+            order += ', type_of_operation.type_operation'
+        elif int(form.type_operation_filter.data) == 2:
+            order += ', type_of_operation.type_operation DESC'
+        elif int(form.type_operation_filter.data) == 3:
+            where += f' and type_of_operation.type_operation == {1}'
+        elif int(form.type_operation_filter.data) == 4:
+            where += f' and type_of_operation.type_operation == {2}'
 
-    return render_template("operation_table_1.html", operations=operations, type_operation=type_operation,
-                           cards=cards, sub_operation=sub_operation, form=form)
+    info = cur.execute(f'''select type_of_operation.title,
+                        operations.created_date,
+                         type_of_operation.type_operation,
+                          cards.title, sub_operations.prihod,
+                           sub_operations.rashod,
+                            operations.content
+                             FROM operations,
+                              cards,
+                               type_of_operation,
+                                sub_operations
+                                 where operations.type_operation_id == type_of_operation.id
+                                  and sub_operations.id_cards == cards.id
+                                   and sub_operations.id_operation == operations.id
+                                    and operations.user_id == {current_user.id}
+                                     {where}
+                                      ORDER BY {order}''').fetchall()
+    #where = ''
+    #order = 'operations.created_date'
+    print(order)
+    print(where)
+    print(f'''select type_of_operation.title,
+                        operations.created_date,
+                         type_of_operation.type_operation,
+                          cards.title, sub_operations.prihod,
+                           sub_operations.rashod,
+                            operations.content
+                             FROM operations,
+                              cards,
+                               type_of_operation,
+                                sub_operations
+                                 where operations.type_operation_id == type_of_operation.id
+                                  and sub_operations.id_cards == cards.id
+                                   and sub_operations.id_operation == operations.id
+                                    and operations.user_id == {current_user.id}
+                                     {where}
+                                      ORDER BY {order}''')
+    print(info)
+    return render_template("operation_table_1.html", info=info, form=form)
 
 
 @app.route('/operations_delete/<int:id>', methods=['GET', 'POST'])
