@@ -18,6 +18,7 @@
             </p>
         {% endfor %}
     </p>
+    {% if form.type_operation %}
     <p>
         {{ form.type_operation.label }}<br>
         {{ form.type_operation(class="form-control") }}<br>
@@ -27,6 +28,11 @@
             </p>
         {% endfor %}
     </p>
+    {% else %}
+    <select>
+        Нет добавленных типов операции
+    </select>
+    {% endif %}
         <p>
         {{ form.card.label }}<br>
         {{ form.card(class="form-control") }}<br>

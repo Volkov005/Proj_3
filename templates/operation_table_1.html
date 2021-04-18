@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <style>
+        body { background: url(https://365psd.ru/images/backgrounds/wood-texture-124.jpg); }
+        div { background: url(https://365psd.ru/images/backgrounds/leather_light.jpg); }
+        table { background: url(https://365psd.ru/images/backgrounds/leather_light.jpg);
+                width: 120%;
+         }
+        .col1 {
+            width: 80px; /* Ширина ячейки */
+   }
+</style>
+<h1><b>Операции</b></h1>
+<a href="/" class="btn btn-secondary">Вернуться</a>
+<a href="operations" class="btn btn-success">Добавить операцию</a>
+<h5>Фильтры</h5>
+<form action="{{ url_for('get_operations_table') }}" method="post" enctype="multipart/form-data">
+    Дата
+  <select name="date_select">
+    <option value="0">Сначала новые</option>
+      <option value="1">Сначала старые</option>
+  </select>Тип операций
+<select name="type_operation_select">
+    <option>Нет</option>
+    <option>Приход</option>
+    <option>Расход</option>
+</select>
+Карты
+<select>
+    {% for card in cards %}
+    <option value="{{ card.id }}">{{ card.title }}</option>
+    {% endfor %}
+</select>
+    <h1></h1>
+  <input type="submit" value="Применить" formmethod="post">
+</form>
+<h1></h1>
+<table border="1">
+    <tr>
+    <th>Тип операции</th>
+    <th>Примечание по типу операции</th>
+    <th>Дата Операции </th>
+    <th>Карта</th>
+    <th>Примечание по карте</th>
+    <th>Приход</th>
+    <th>Расход</th>
+    <th>Настройки</th>
+    <th>Примечание по операции</th>
+   </tr>
+{% for item in operations %}
+
+    {% for i in type_operation %}
+        {% if i.id == item.type_operation_id %}
+            {% set TITLE = i.title %}
+            {% if i.content %}
+                {% set TYPE_OPERATION_CONTENT = i.content %}
+            {% endif %}
+            {% if item.content %}
+                {% set OPERATION_CONTENT = item.content %}
+            {% endif %}
+
+            {% for sub_oper in sub_operation %}
+                {% for card in cards %}
+                    {% if sub_oper.id_cards == card.id and sub_oper.id_operation == item.id %}
+                        {% set CARD = card.title %}
+                        {% if card.content %}
+                            {% set CARD_CONTENT = card.content %}
+                        {% endif %}
+                        {% set PRIHOD = sub_oper.prihod %}
+                        {% set RASHOD = sub_oper.rashod %}
+                                    <tr><td>{{TITLE}}</td><td>{{TYPE_OPERATION_CONTENT}}</td><td>{{item.created_date}}</td>
+                <td>{{CARD}}</td><td>{{CARD_CONTENT}}</td><td>{{PRIHOD}}</td><td>{{RASHOD}}</td>
+                <td class="col1"><a href="/operations/{{ item.id }}" class="btn btn-warning btn-sm" style="height:35px;width:80px">Изменить</a>
+        <a href="/operations_delete/{{ item.id }}" class="btn btn-danger btn-sm" style="height:35px;width:80px">Удалить</a>
+                </td>
+            <td>{{OPERATION_CONTENT}}</td></tr>
+                    {% endif %}
+                {% endfor %}
+            {% endfor %}
+
+
+        {% endif %}
+    {% endfor %}
+
+
+{% endfor %}
+</table>
+{% endblock %}

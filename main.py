@@ -1,7 +1,7 @@
 import datetime
 import sqlite3
 
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, url_for
 from flask_restful import abort
 from sqlalchemy import create_engine, desc
 from werkzeug.utils import redirect
@@ -339,9 +339,18 @@ def cards_delete(id):
     cards = db_sess.query(Cards).filter(Cards.id == id,
                                         Cards.user == current_user
                                         ).first()
-    if cards:
+    sub_operation = db_sess.query(Sub_operation).filter(Sub_operation.id_cards == cards.id,
+                                                        Sub_operation.user_id == current_user.id,)
+    if cards and not sub_operation:
         db_sess.delete(cards)
         db_sess.commit()
+    elif cards and sub_operation:
+        for i in sub_operation:
+            db_sess.delete(db_sess.query(Operations).filter(i.id_operation == Operations.id).first())
+            db_sess.delete(i)
+        db_sess.delete(cards)
+        db_sess.commit()
+
     else:
         abort(404)
     return redirect('/cards_table')
@@ -354,7 +363,16 @@ def type_operation_delete(id):
     type_operation = db_sess.query(Type_of_operation).filter(Type_of_operation.id == id,
                                                              Type_of_operation.user == current_user
                                                              ).first()
-    if type_operation:
+    operation = db_sess.query(Operations).filter(Operations.type_operation_id == type_operation.id,
+                                                 Operations.user_id == current_user.id)
+    sub_operation = db_sess.query(Sub_operation).filter(Sub_operation.user_id == current_user.id)
+    if type_operation and not operation:
+        db_sess.delete(type_operation)
+        db_sess.commit()
+    elif type_operation and operation:
+        for i in sub_operation:
+            db_sess.delete(db_sess.query(Operations).filter(i.id_operation == Operations.id).first())
+            db_sess.delete(i)
         db_sess.delete(type_operation)
         db_sess.commit()
     else:
@@ -431,11 +449,11 @@ def add_operation():
                                                             form.type_operation.data == Type_of_operation.id).first()
 
         if type_oper.type_operation == 1:
-            sub_operation.prihod = form.sum.data if form.sum.data != '' else 0
+            sub_operation.prihod = float(form.sum.data) if form.sum.data != '' else 0
             sub_operation.rashod = 0
         elif type_oper.type_operation == 2:
             sub_operation.prihod = 0
-            sub_operation.rashod = form.sum.data if form.sum.data != '' else 0
+            sub_operation.rashod = float(form.sum.data) if form.sum.data != '' else 0
         else:
             sub_operation.prihod = 0
             sub_operation.rashod = 0
@@ -462,14 +480,15 @@ def add_operation():
                            form=form)
 
 
-@app.route('/operations_table')
+@app.route('/operations_table', methods=['GET', 'POST'])
 def get_operations_table():
     db_sess = db_session.create_session()
     operations = db_sess.query(Operations).filter(Operations.user_id == current_user.id)
     type_operation = db_sess.query(Type_of_operation).filter(Type_of_operation.user_id == current_user.id)
     cards = db_sess.query(Cards).filter(Cards.user_id == current_user.id)
     sub_operation = db_sess.query(Sub_operation).filter(Sub_operation.user_id == current_user.id)
-    return render_template("operations_table.html", operations=operations, type_operation=type_operation,
+
+    return render_template("operation_table_1.html", operations=operations, type_operation=type_operation,
                            cards=cards, sub_operation=sub_operation)
 
 

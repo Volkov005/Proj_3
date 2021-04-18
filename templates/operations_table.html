@@ -3,11 +3,36 @@
 {% block content %}
     <style>
         body { background: url(https://365psd.ru/images/backgrounds/wood-texture-124.jpg); }
-        div { background: url(https://365psd.ru/images/backgrounds/leather_light.jpg) }
+        div { background: url(https://365psd.ru/images/backgrounds/leather_light.jpg); }
 </style>
 <h1><b>Операции</b></h1>
 <a href="/" class="btn btn-secondary">Вернуться</a>
 <a href="operations" class="btn btn-success">Добавить операцию</a>
+<h5>Фильтры</h5>
+<form action="PageObjects" method="post">
+    Дата
+  <select>
+    <option selected="selected" disabled>Objects on page:</option>
+    <option value="10">10</option>
+    <option value="20">20</option>
+    <option value="30">30</option>
+    <option value="40">40</option>
+    <option value="50">50</option>
+  </select>Тип операций
+<select>
+    <option>Нет</option>
+    <option>Приход</option>
+    <option>Расход</option>
+</select>
+Карты
+<select>
+    <option>Нет</option>
+    <option>111</option>
+    <option>Расход</option>
+</select>
+    <h1></h1>
+  <input type="submit" value="Применить">
+</form>
 <h1></h1>
 {% for item in operations %}
 <div class="col-md6 border rounded">
@@ -16,36 +41,38 @@
         {% if i.id == item.type_operation_id %}
     <div>
         <b>Операция:</b> <u>{{ i.title }}</u>;
-        {% if i.content %}
+        {% if item.content %}
          <b>Примечание:</b>
-        <h7>{{ i.content }}</h7>
+        <u>{{ item.content }}</u>
         {% endif %}
-    </div>
     {% endif %}
     {% endfor %}
-        <div>
             <b>Дата операции:</b> <u>{{ item.created_date }}</u>
             <b>Пользователь:</b> <u>{{item.user.name}}</u>
-    </div>
     {% for sub_oper in sub_operation %}
     {% for card in cards %}
     {% if sub_oper.id_cards == card.id and sub_oper.id_operation == item.id %}
-    <div>
         <b>Карта:</b> <u>{{ card.title }}</u>
         {% if card.content %}
         <b>Примечание:</b> <u>{{ card.content }}</u>;
         {% endif %}
+        <div>
+                <font color="#00AF00"><b>Приход: {{ sub_oper.prihod }} руб </b></font>
+        <font color="red"><b>Расход: {{ sub_oper.rashod }} руб</b></font>
+                <a href="/operations/{{ item.id }}" class="btn btn-warning btn-sm">
+            Изменить
+        </a>
+        <a href="/operations_delete/{{ item.id }}" class="btn btn-danger btn-sm ">
+            Удалить
+        </a>
+        </div>
+        <h1></h1>
     </div>
     {% endif %}
     {% endfor %}
     {% endfor %}
     {% for sub_oper in sub_operation %}
     {% if sub_oper.id_operation == item.id %}
-    <div>
-        <font color="#00AF00"><b>Приход: {{ sub_oper.prihod }} руб </b></font>
-        <font>----------</font>
-        <font color="red"><b>Расход: {{ sub_oper.rashod }} руб</b></font>
-    <div>
         {% if item.content %}
         Примечание по операции: {{ item.content }}
         {% endif %}
@@ -54,17 +81,9 @@
     {% endfor %}
     <h1></h1>
         {% if current_user.is_authenticated and current_user == item.user %}
-    <div>
-        <a href="/operations/{{ item.id }}" class="btn btn-warning">
-            Изменить
-        </a>
-        <a href="/operations_delete/{{ item.id }}" class="btn btn-danger">
-            Удалить
-        </a>
-        <h1></h1>
     </div>
 {% endif %}
 </div>
-<h1></h1>
+<h6></h6>
 {% endfor %}
 {% endblock %}
