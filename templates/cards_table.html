@@ -27,7 +27,7 @@
         {{item.content}}
     </div>
     <div>
-        Автор - {{item.user.name}}, Дата создания - {{ item.created_date }}
+        Автор - {{item.user.name}}, Дата создания - {{ item.created_date.strftime('%d/%m/%Y') }}
     </div>
     <div>
         <b>Остаток: {{ item.balance }} руб</b>

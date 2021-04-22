@@ -1,7 +1,6 @@
 import datetime
 import sqlite3
 
-from dateutil import parser
 from flask import Flask, render_template, request
 from flask_restful import abort
 from sqlalchemy import create_engine, desc
@@ -53,10 +52,10 @@ def reqister():
             return render_template('register.html', title='Регистрация',
                                    form=form,
                                    message="Такой пользователь уже есть")
-        user = User(
-            name=form.name.data,
-            email=form.email.data
-        )
+        user = User()
+        user.name = form.name.data,
+        user.email = form.email.data
+
         user.set_password(form.password.data)
         db_sess.add(user)
         db_sess.commit()
@@ -483,6 +482,7 @@ def add_operation():
 
 
 @app.route('/operations_table', methods=['GET', 'POST'])
+@login_required
 def get_operations_table():
     db_sess = db_session.create_session()
     form = FiltersForm()
@@ -491,7 +491,7 @@ def get_operations_table():
     if not form.first_date.data:
         form.first_date.data = db_sess.query(Operations).filter(Operations.user_id == current_user.id). \
             order_by(Operations.created_date).first().created_date
-    if not form.first_date.data:
+    if not form.last_date.data:
         form.last_date.data = db_sess.query(Operations).filter(Operations.user_id == current_user.id). \
             order_by(desc(Operations.created_date)).first().created_date
     con = sqlite3.connect('db/family_bud.sqlite')
@@ -513,8 +513,6 @@ def get_operations_table():
             where += f' and type_of_operation.type_operation == {1}'
         elif int(form.type_operation_filter.data) == 4:
             where += f' and type_of_operation.type_operation == {2}'
-        print(form.first_date.data)
-        print(form.last_date.data)
         if form.last_date.data and form.first_date.data:
             where += f" and operations.created_date BETWEEN '{form.first_date.data}' and '{form.last_date.data}'"
 
@@ -535,25 +533,6 @@ def get_operations_table():
                                      and operations.user_id == {current_user.id}
                                       {where}
                                        ORDER BY {order}''').fetchall()
-
-    print(f'''select type_of_operation.title,
-                        operations.created_date,
-                         type_of_operation.type_operation,
-                          cards.title, sub_operations.prihod,
-                           sub_operations.rashod,
-                            operations.content,
-                             operations.id
-                              FROM operations,
-                               cards,
-                                type_of_operation,
-                                 sub_operations
-                                  where operations.type_operation_id == type_of_operation.id
-                                   and sub_operations.id_cards == cards.id
-                                    and sub_operations.id_operation == operations.id
-                                     and operations.user_id == {current_user.id}
-                                      {where}
-                                       ORDER BY {order}''')
-    print(info)
     return render_template("operation_table_1.html", info=info, form=form)
 
 
@@ -618,12 +597,12 @@ def edit_operation(id):
             operation.type_operation_id = form.type_operation.data
             operation.created_date = form.date_time.data
             operation.content = form.content.data
-            type = db_sess.query(Type_of_operation).filter(Type_of_operation.id ==
-                                                           int(form.type_operation.data)).first()
-            if int(type.type_operation) == 1:
+            type_oper = db_sess.query(Type_of_operation).filter(Type_of_operation.id ==
+                                                                int(form.type_operation.data)).first()
+            if int(type_oper.type_operation) == 1:
                 sub_operation.prihod = float(form.sum.data) if form.sum.data != '' else 0
                 sub_operation.rashod = 0
-            elif int(type.type_operation) == 2:
+            elif int(type_oper.type_operation) == 2:
                 sub_operation.prihod = 0
                 sub_operation.rashod = float(form.sum.data) if form.sum.data != '' else 0
             else:
@@ -640,11 +619,12 @@ def edit_operation(id):
             abort(404)
     return render_template('operations.html',
                            title='Редактирование операции',
-                           form=form,
+                           form=form
                            )
 
 
 @app.route('/reload_cards_balance')
+@login_required
 def reload_cards_balance():
     db_sess = db_session.create_session()
     cards = db_sess.query(Cards).filter(Cards.user_id == current_user.id)
@@ -658,6 +638,10 @@ def reload_cards_balance():
                 i.balance -= float(j.rashod)
     db_sess.commit()
     return redirect('/cards_table')
+
+
+def save_exel_file():
+    pass
 
 
 if __name__ == '__main__':
