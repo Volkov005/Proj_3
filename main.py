@@ -27,10 +27,11 @@ app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
 
 login_manager = LoginManager()
 login_manager.init_app(app)
+BASE = 'db/family_bud.sqlite'
 
 
 def main():
-    db_session.global_init("db/family_bud.sqlite")
+    db_session.global_init(BASE)
     app.run()
 
 
@@ -52,10 +53,10 @@ def reqister():
             return render_template('register.html', title='Регистрация',
                                    form=form,
                                    message="Такой пользователь уже есть")
-        user = User()
-        user.name = form.name.data,
-        user.email = form.email.data
-
+        user = User(
+            name=form.name.data,
+            email=form.email.data
+        )
         user.set_password(form.password.data)
         db_sess.add(user)
         db_sess.commit()
@@ -436,7 +437,11 @@ def add_operation():
         create_engine('sqlite:///some.db', connect_args={'timeout': 10000})
 
         operation = Operations()
-        operation.type_operation_id = form.type_operation.data
+        if form.type_operation.data:
+            operation.type_operation_id = form.type_operation.data
+        else:
+            return render_template('operations.html', title='Добавление операции',
+                                   form=form, my_mess='Сначала добавьте тип операции!')
         operation.created_date = form.date_time.data
         operation.content = form.content.data
 
@@ -469,7 +474,8 @@ def add_operation():
             card.balance -= float(str(sub_operation.rashod).replace(',', '.')) if ',' in str(sub_operation.rashod) \
                 else float(sub_operation.rashod)
         else:
-            return redirect('/operations')
+            return render_template('operations.html', title='Добавление операции',
+                                   form=form, my_mess1='Сначала добавте карту!')
 
         current_user.sub_operations.append(sub_operation)
 
@@ -489,18 +495,20 @@ def get_operations_table():
     form.card.choices = [(i.id, i.title) for i in db_sess.query(Cards).filter(Cards.user_id == current_user.id)]
     form.card.choices.insert(0, (0, 'Все'))
     if not form.first_date.data:
-        form.first_date.data = db_sess.query(Operations).filter(Operations.user_id == current_user.id). \
-            order_by(Operations.created_date).first().created_date
+        operation = db_sess.query(Operations).filter(Operations.user_id == current_user.id). \
+            order_by(Operations.created_date).first()
+        if operation:
+            form.first_date.data = operation.created_date
     if not form.last_date.data:
-        form.last_date.data = db_sess.query(Operations).filter(Operations.user_id == current_user.id). \
-            order_by(desc(Operations.created_date)).first().created_date
-    con = sqlite3.connect('db/family_bud.sqlite')
+        operation = db_sess.query(Operations).filter(Operations.user_id == current_user.id). \
+            order_by(desc(Operations.created_date)).first()
+        if operation:
+            form.last_date.data = operation.created_date
+    con = sqlite3.connect(BASE)
     cur = con.cursor()
     where = ''
     order = 'operations.created_date DESC'
     if form.validate_on_submit():
-        con = sqlite3.connect('db/family_bud.sqlite')
-        cur = con.cursor()
         if int(form.date.data):
             order = order[:-4]
         if int(form.card.data):
@@ -513,8 +521,8 @@ def get_operations_table():
             where += f' and type_of_operation.type_operation == {1}'
         elif int(form.type_operation_filter.data) == 4:
             where += f' and type_of_operation.type_operation == {2}'
-        if form.last_date.data and form.first_date.data:
-            where += f" and operations.created_date BETWEEN '{form.first_date.data}' and '{form.last_date.data}'"
+    if form.last_date.data and form.first_date.data:
+        where += f" and operations.created_date BETWEEN '{form.first_date.data}' and '{form.last_date.data}'"
 
     info = cur.execute(f'''select type_of_operation.title,
                         operations.created_date,
@@ -533,6 +541,24 @@ def get_operations_table():
                                      and operations.user_id == {current_user.id}
                                       {where}
                                        ORDER BY {order}''').fetchall()
+    print(f'''select type_of_operation.title,
+                        operations.created_date,
+                         type_of_operation.type_operation,
+                          cards.title, sub_operations.prihod,
+                           sub_operations.rashod,
+                            operations.content,
+                             operations.id
+                              FROM operations,
+                               cards,
+                                type_of_operation,
+                                 sub_operations
+                                  where operations.type_operation_id == type_of_operation.id
+                                   and sub_operations.id_cards == cards.id
+                                    and sub_operations.id_operation == operations.id
+                                     and operations.user_id == {current_user.id}
+                                      {where}
+                                       ORDER BY {order}''')
+    print(info)
     return render_template("operation_table_1.html", info=info, form=form)
 
 

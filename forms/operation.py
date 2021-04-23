@@ -8,8 +8,7 @@ from wtforms.validators import NumberRange
 
 class OperationForm(FlaskForm):
     type_operation = SelectField('Тип операции  (1 - Приход, 2 - Расход, 3 - Универсал)', validate_choice=False)
-    date_time = DateField("Дата операции (ДД/ММ/ГГГГ)", format='%d/%m/%Y', default=datetime.date.today()
-                          .strftime('%d/%m/%Y'),
+    date_time = DateField("Дата операции (ДД/ММ/ГГГГ)", format='%d/%m/%Y', default=datetime.date.today(),
                           render_kw={'autofocus': True})
     card = SelectField("Карта", validate_choice=False)
     sum = FloatField("Сумма", validators=[NumberRange(min=0.01,
